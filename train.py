@@ -32,7 +32,7 @@ from keras.backend.tensorflow_backend import set_session
 
 def train_model(model_name, env, agent, curriculum_manager, tb_filewriter, args_training) : 
     
-    # rewards = []
+    # rewards = [] l
     # loss_values, nbs_of_steps, doabilities = [], [], []
     # wall_ratios_spawn, key_elem_ratio_spawn, max_nb_steps_ratios = [], [], []
     train_start_time = time.time()
