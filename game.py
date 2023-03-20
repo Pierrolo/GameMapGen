@@ -127,10 +127,27 @@ class Map(object):
         
         return np.array(display_array, dtype = np.int16)
     
-    def display(self, quality = None):
+    
+    def plot_path(self, path, col = "r", delta = 0):
+        for step_nb in range(len(path)-1):
+            plt.arrow(x=path[step_nb][1]+delta, y=path[step_nb][0]+delta,
+                      dx=path[step_nb+1][1]-path[step_nb][1], dy=path[step_nb+1][0]-path[step_nb][0],
+                      head_width=0.25, head_length=0.2, width = 0.05, fc='w', ec=col, length_includes_head = True)
+
+        
+    def display(self, quality = 0, paths = [None, None], show = True, title =""):
         ## display the map into a plot
+        plt.figure(figsize = (5,5))
         display_array  = self.compute_display_array()
         plt.imshow(display_array)
+        
+        path_S_to_T, path_T_to_F = paths[0], paths[1]
+        
+
+
+        if path_S_to_T is not None : self.plot_path(path_S_to_T, col = "y", delta = 0.1)
+        if path_T_to_F is not None : self.plot_path(path_T_to_F, col = "g", delta = -0.1)
+
         plt.yticks(np.arange(self.map_size), np.arange(self.map_size))
         plt.xticks(np.arange(self.map_size), np.arange(self.map_size))
         for letter, elem_id  in {"S" : START, "F" : FINISH, "T": TREASURE, "W": WALL}.items() : 
@@ -140,8 +157,12 @@ class Map(object):
                 elem_positions[1][elem_nb]
                 plt.text(elem_positions[1][elem_nb], elem_positions[0][elem_nb], letter,
                          color = "white", fontsize = 18, fontweight="bold", horizontalalignment = "center")
-        plt.title(f"Current Map, quality: {round(quality, 3)}")
-        plt.show()
+        
+
+        plt.title(f"{title} Current Map, quality: {round(quality, 3)}")
+        
+        if show :
+            plt.show()
 
 
 
@@ -245,7 +266,8 @@ class Game_Env(object):
     
     def get_reward(self):
         reward  = 0.
-        # reward = self.get_quality() - self.current_quality
+        reward = self.get_quality() - self.current_quality
+        reward -= 0.1
         if self.get_done():
             reward += self.get_quality()
         return reward
@@ -266,7 +288,7 @@ class Game_Env(object):
             path_S_to_T = self.get_path(from_ = START, to_ = TREASURE, avoid = [WALL, FINISH])
             path_T_to_F = self.get_path(from_ = TREASURE, to_ = FINISH, avoid = [WALL])
             if path_S_to_T is not None and path_T_to_F is not None : 
-                return True, path_S_to_T, path_T_to_F
+                return True, path_S_to_T, path_T_to_F            
             
         return False, None, None
 
@@ -331,8 +353,6 @@ class Game_Env(object):
             
             
             
-        
-        
         ## Is the level overall doable ?
         if path_S_to_T is not None and path_T_to_F is not None : 
             quality += 2.5
@@ -363,20 +383,12 @@ class Game_Env(object):
 
 
     def get_done(self):
-        
         if self.nb_steps >= self.map_size*self.map_size * self.max_nb_steps_ratio:
             return True
-        
-        if self.current_map.check_all_key_elements_present() :
-            path_S_to_T = self.get_path(from_ = START, to_ = TREASURE, avoid = [WALL, FINISH])
-            path_T_to_F = self.get_path(from_ = TREASURE, to_ = FINISH, avoid = [WALL])
-            if path_S_to_T is not None and path_T_to_F is not None : 
-                return True
-        
+        doable, _, _ = self.is_level_doable()
+        if doable:
+            return True
         return False
-
-
-
 
 
     def get_path(self, from_ = START, to_ = TREASURE, avoid = [WALL]):
@@ -390,8 +402,12 @@ class Game_Env(object):
         return path
 
 
-    def display(self):
-        self.current_map.display(quality = self.get_quality())
+    def display(self, include_paths = True, show = True, title = ""):
+        if include_paths :
+            doable, path_S_to_T, path_T_to_F = self.is_level_doable()
+        else : 
+            doable, path_S_to_T, path_T_to_F = None, None, None
+        self.current_map.display(quality = self.get_quality(), paths = [path_S_to_T, path_T_to_F], show = show, title = title)
 
 
 if __name__ == "__main__":
@@ -402,9 +418,13 @@ if __name__ == "__main__":
     self = Game_Env(map_size = map_size)
     
     
-    self.reset(wall_ratio = 0.65, key_elem_ratio=0.5)
+    self.reset(wall_ratio = 0.5, key_elem_ratio=0.5)
     self.display()
     self.current_map.check_all_key_elements_present()
+
+    
+
+    self.current_map.change_tile((4,4), EMPTY)    
 
 
     self.current_map.map_array

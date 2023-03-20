@@ -149,7 +149,6 @@ if __name__ == "__main__" :
     
     train_model(model_name, env, agent, curriculum_manager, tb_filewriter, args_training)
     
-
     
     
     

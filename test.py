@@ -23,7 +23,7 @@ import tensorflow as tf
 from keras.backend.tensorflow_backend import set_session
 
 import importlib
-    
+import gif
 
 def test_model(EPISODES, env, agent, wall_ratio = 0.65, key_elem_ratio = 0.75):
     
@@ -85,7 +85,7 @@ if __name__ == "__main__" :
     
     parser = argparse.ArgumentParser(description='Test DQN Model')
     parser.add_argument('--model-name', '-m', type=str, 
-                        default='Map8_SeparatePosAndElemSoftmaxAction_RwrdDistStoFsparserMap__Mar_20_15_57_08',
+                        default='Map8_CurriculumMoreElemSpawn_SeparatePosAndElemSoftmaxAction_RwrdDistStoF__Mar_20_01_49_34',
                         help='Name of model to test')
     parser.add_argument('--EPISODES', '-E', type=int,  default=50, help='Nb of episodes to run')
     args = parser.parse_args()
@@ -138,7 +138,14 @@ if __name__ == "__main__" :
     for index in ind_k_vest_rewrd:
         env.set_current_map(maps[index])
         env.display()
-
+    
+    
+    
+    
+    
+    
+    
+    
     """
     k_best = 3
     for max_step_value, rewards in all_rewards.items() :
