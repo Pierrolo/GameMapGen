@@ -1,8 +1,10 @@
 # GameMapGen
 
-[image1]: https://github.com/Pierrolo/GameMapGen/blob/main/example.gif "Trained Agent"
+[agent_gif]: https://github.com/Pierrolo/GameMapGen/blob/main/content/example.gif "Trained Agent"
+[ExampleMap]: https://github.com/Pierrolo/GameMapGen/blob/main/content/example_map.png "ExampleMap"
 
-![Trained Agent][image1]
+![Trained Agent][agent_gif]
+![ExampleMap][ExampleMap]
 
 ## Description 
 
@@ -62,13 +64,35 @@ The loss function __loss_fn__ can either be mse or huber. The optimizer __opt_ty
 
 
 ## Training
+```
+python train.py --config-fn --config-dir
+```
+You can create your own config file, although it is highly rencommanded you only run ``` python train.py ``` and change the congif file directly. 
 During trianing, a tensorboard file will be generated in "reporting \ __model_name__ \".
 Weights will be saved regularly into "models \ __model_name__ \". In addition to the weights, the config file will be saved to be able to use it later for testing. Finally, the python script responsible for building the model is also saved. This is a bit unhordotox, but this allows to easily recreate the same model and apply the saved weights on it. Saving the model architecture directly is not feasible in most cases, as our approach relies on several Lambda keras layers.
 
+
+
 ## Testing And Reporting
+```
+python  test.py --model-name --checkpoint-nb --EPISODES
+```
+```
+python  MakeGifs.py --model-name --checkpoint-nb --EPISODES  
+```
+model-name is the name of the trained model, checkpoint-nb is an int referencing which of the checkpoint to load (if null then it takes the most recent one) and EPISODES the number of episodes to run per combination of reset parameters.
+
 After providing a __model_name__ to be tested, when executing the script test.py or MakeGifs.py, the script will fetch the associated model builder and the saved weights specified to re-create the desired agent.
 In test.py, the agent is ask to play several episodes with varying lenghts and initial state parameters. subsequently it will produce a a few reporting plots and the best maps it generated.
-In MakeGifs.py, the agent will play a few number of episodes which will be used to generate a gif. This gif will be saved in "models\ __model_name__".
+
+[image_test_1]: https://github.com/Pierrolo/GameMapGen/blob/main/content/test_results_1.png "test_results_1"
+[image_test_2]: https://github.com/Pierrolo/GameMapGen/blob/main/content/test_results_2.png "test_results_2"
+
+![test_results_1][image_test_1]
+![test_results_2][image_test_2]
+
+In MakeGifs.py, the agent will play a few number of episodes which will be used to generate a gif. This gif will be saved in "reporting\ __model_name__"; next to the tensorboard file.
+
 
 
 

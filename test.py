@@ -97,7 +97,7 @@ if __name__ == "__main__" :
     
     parser = argparse.ArgumentParser(description='Test DQN Model')
     parser.add_argument('--model-name', '-m', type=str, 
-                        default='Map8_NewRwrd___Mar_22_16_29_11',
+                        default='Map8_Unet_NewRwrd__Mar_22_19_57_27',
                         help='Name of model to test')
     parser.add_argument('--checkpoint-nb', '-cn', type=int,  default=None, help='which checkpoint to load')
     parser.add_argument('--EPISODES', '-E', type=int,  default=50, help='Nb of episodes to run')

@@ -30,11 +30,21 @@ def display_for_gif(env, include_paths, show, title):
     env.display(include_paths = include_paths, show = show, title = title)
 
 def make_gifs(EPISODES, env, agent, wall_ratio = 0.65, key_elem_ratio = 0.75, model_name_saved = "", gif_name = None):
+    ## What is commented out is to make the best gifs, for reporting.
     
     frames = []
     for e in range(EPISODES):
         state = env.reset(test = True, wall_ratio = wall_ratio, key_elem_ratio = key_elem_ratio)
         for _ in range(2) : frames.append(display_for_gif(env, include_paths = True, show = False, title = f"Ep {e} ||"))
+
+    # frames_cache = []
+    # ep = 1
+    # while ep <= 10 :
+    #     frame_ep = []
+    #     state = env.reset(test = True, wall_ratio = np.random.choice([0.2,0.4,0.6,0.8]), key_elem_ratio = np.random.choice([0.2,0.5,1.0]), max_nb_steps_ratio = np.random.choice([0.2,0.5,1.0]))
+    #     for _ in range(2) : frame_ep.append(display_for_gif(env, include_paths = True, show = False, title = f"Ep {ep} ||"))
+        
+        
         state = np.reshape(state, [1, -1])
         done = False
         
@@ -43,13 +53,21 @@ def make_gifs(EPISODES, env, agent, wall_ratio = 0.65, key_elem_ratio = 0.75, mo
             next_state, reward, done, infos = env.step(action)
             state = np.reshape(next_state, [1, -1])
             frames.append(display_for_gif(env, include_paths = False, show = False, title = f"Ep {e} ||"))
+            # frame_ep.append(display_for_gif(env, include_paths = False, show = False, title = f"Ep {ep} ||"))
             if done:
                 for _ in range(3) : frames.append(display_for_gif(env, include_paths = True, show = False, title = f"Ep {e} ||"))
+                # for _ in range(3) : frame_ep.append(display_for_gif(env, include_paths = True, show = False, title = f"Ep {ep} ||"))
                 break
+        
+        # if reward > 0.6 :
+        #     print(ep, reward)
+        #     frames_cache += frame_ep
+        #     ep += 1
     
     if gif_name is None : 
         gif_name = "examples"
     gif.save(frames, f"reporting\\{model_name_saved}\\{gif_name}.gif", duration=250)
+    # gif.save(frames_cache, f"reporting\\{model_name_saved}\\{gif_name}.gif", duration=250)
 
 
 if __name__ == "__main__" :
@@ -63,7 +81,7 @@ if __name__ == "__main__" :
     
     parser = argparse.ArgumentParser(description='Make Gifs After Training')
     parser.add_argument('--model-name', '-m', type=str, 
-                        default='Map8_NewRwrd___Mar_22_16_29_11',
+                        default='Map8_Unet_NewRwrd__Mar_22_19_57_27',
                         help='Name of model to test')
     parser.add_argument('--checkpoint-nb', '-cn', type=int,  default=None, help='which checkpoint to load')
     parser.add_argument('--EPISODES', '-E', type=int,  default=10, help='Nb of episodes to run')
@@ -89,7 +107,7 @@ if __name__ == "__main__" :
     agent.load(model_name_saved, args.checkpoint_nb)
     
     
-    wall_ratio = 0.65
+    wall_ratio = 0.55
     key_elem_ratio = 0.5
     max_nb_steps_ratio = 0.5
     agent.set_epsilon(0.1)
