@@ -154,7 +154,7 @@ def get_model_builder(env, args_training):
             conv_out = U_Net(convs_input = convs_input)  
 
 
-        if args_training.separate_pos_and_elem :
+        if args_training.dueling_arch :
             
             ## Value function stream
             conv_val = conv_out
