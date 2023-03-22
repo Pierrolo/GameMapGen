@@ -1,7 +1,6 @@
 # GameMapGen
 
 [image1]: https://github.com/Pierrolo/GameMapGen/blob/main/example.gif "Trained Agent"
-[image2]: https://github.com/Pierrolo/GameMapGen/blob/main/model.png "Model architecture"
 
 ![Trained Agent][image1]
 
@@ -50,3 +49,26 @@ The exploration is epsilon-greedy with a starting value of __epsilon__, a decay 
 The buffer used is a prioritized buffer ([(arXiv:1511.05952)](https://arxiv.org/abs/1511.05952)) of size __capacity__ and of prioritizing value of __alpha__
 
 Finally, there is a possibility to enact an automatic curriculum ([(arXiv:1910.07224)](https://arxiv.org/abs/1910.07224)) (__enable_auto_curriculum__), which select automatically the values of wall_ratio and key_elem_ratio for each episode. Removing it will sample randomly both values in a \[0,1\] interval.
+
+
+
+
+## Neural Network
+
+Because of the sate and the action space have similar shape (state: (map_size * map_size), action: (map_size * map_size * 5)) there are three possibilities of network architecture for it __model_type__.
+It can be [_FullyConv_](https://github.com/Pierrolo/GameMapGen/blob/main/content/model_FullyConv.png), _FractalNet_, [_U-net_](https://github.com/Pierrolo/GameMapGen/blob/main/content/model_Unet.png).
+Moreover, there is the possibility to apply the dueling Q network architecture ([(arXiv:1511.06581)](https://arxiv.org/abs/1511.06581)) (__dueling_arch__).
+The loss function __loss_fn__ can either be mse or huber. The optimizer __opt_type__ can be Adam, SGD, or RMS. And you can change the value (or remove) of the gradient clipping __clipnorm__.
+
+
+## Training
+During trianing, a tensorboard file will be generated in "reporting \ __model_name__ \".
+Weights will be saved regularly into "models \ __model_name__ \". In addition to the weights, the config file will be saved to be able to use it later for testing. Finally, the python script responsible for building the model is also saved. This is a bit unhordotox, but this allows to easily recreate the same model and apply the saved weights on it. Saving the model architecture directly is not feasible in most cases, as our approach relies on several Lambda keras layers.
+
+## Testing And Reporting
+After providing a __model_name__ to be tested, when executing the script test.py or MakeGifs.py, the script will fetch the associated model builder and the saved weights specified to re-create the desired agent.
+In test.py, the agent is ask to play several episodes with varying lenghts and initial state parameters. subsequently it will produce a a few reporting plots and the best maps it generated.
+In MakeGifs.py, the agent will play a few number of episodes which will be used to generate a gif. This gif will be saved in "models\ __model_name__".
+
+
+
