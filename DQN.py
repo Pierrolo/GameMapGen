@@ -45,6 +45,7 @@ class DQNAgent:
         if model_builder is not None : 
             self._build_model = model_builder
         self.model = self._build_model()
+        self.model.summary()
         self.target_model = self._build_model()
 
     def set_epsilon(self, epsilon):
@@ -127,18 +128,30 @@ class DQNAgent:
         self.target_model.set_weights(weights)
 
 
-    def load(self, name):
-        self.model.load_weights(name)
-        self.target_model.load_weights(name)
+    def load(self, name, e = None):
+        if e is None:            
+            if len([name for name in os.listdir(f"models\\{name}\\") if name[-2:] == "h5"]) == 1 :
+                self.model.load_weights(f"models\\{name}\\Model_weights.h5")
+                self.target_model.load_weights(f"models\\{name}\\Model_weights.h5")
+            else : 
+                e = max([int(name.split(".")[0].split("_")[-1][:-1]) for name in os.listdir(f"models\\{name}\\") if name[-2:] == "h5"])
+                self.model.load_weights(f"models\\{name}\\Model_weights_{e}K.h5")
+                self.target_model.load_weights(f"models\\{name}\\Model_weights_{e}K.h5")
+        else : 
+            self.model.load_weights(f"models\\{name}\\Model_weights_{e}K.h5")
+            self.target_model.load_weights(f"models\\{name}\\Model_weights_{e}K.h5")
 
 
-    def save(self, name):
+    def save(self, name, e = None):
         if not os.path.exists(f"models\\{name}\\"):
             ## Copy the py builder file
             os.makedirs(f"models\\{name}\\",  exist_ok = True)
             shutil.copyfile(".\\Model_builder.py", f"models\\{name}\\Model_builder.py")
             shutil.copyfile(".\\Config\\train_config.config", f"models\\{name}\\config.config")
-        self.model.save_weights(f"models\\{name}\\Model_weights.h5")
+        if e is None:
+            self.model.save_weights(f"models\\{name}\\Model_weights.h5")
+        else :
+            self.model.save_weights(f"models\\{name}\\Model_weights_{e//1000}K.h5")
 
 
 

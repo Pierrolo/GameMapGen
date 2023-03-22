@@ -10,7 +10,7 @@ import random
 from collections import deque
 
 class PrioritizedReplayBuffer:
-    def __init__(self, capacity, alpha=0.6, beta=0.4, beta_annealing=0.9999, epsilon=1e-8):
+    def __init__(self, capacity, alpha=0.6, beta=0.5, beta_annealing=0.9999, epsilon=1e-8):
         self.capacity = capacity
         self.alpha = alpha
         self.beta = beta

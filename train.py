@@ -71,19 +71,24 @@ def train_model(model_name, env, agent, curriculum_manager, tb_filewriter, args_
             summary.value.add(tag="Model/Loss", simple_value= loss_value)
             summary.value.add(tag="Model/Time Per Replay", simple_value= end_replay_time - start_replay_time)
             if e%args_training.save_weight_every_nb_ep==0:
-                agent.save(model_name)
+                agent.save(model_name, e)
             
         if e % args_training.update_target_network_ep == 0:
             agent.target_train()
         
         
         
+        if infos["doable"]:
+            is_doable, path_S_to_T, path_T_to_F = env.is_level_doable()
+            summary.value.add(tag="Perfs/len_path_S_to_T", simple_value= len(path_S_to_T))
+            summary.value.add(tag="Perfs/len_path_T_to_F", simple_value= len(path_T_to_F))
+        
         ### Reporting
         summary.value.add(tag="Perfs/RewardEp", simple_value= np.sum(rewards_ep))
         summary.value.add(tag="Perfs/RewardMean", simple_value= np.mean(rewards_ep))
         summary.value.add(tag="Perfs/Nb Steps", simple_value= infos["nb_steps"])
         summary.value.add(tag="Perfs/Doability", simple_value= infos["doable"])
-        summary.value.add(tag="Perfs/Epsilon", simple_value= agent.epsilon)
+        # summary.value.add(tag="Perfs/Epsilon", simple_value= agent.epsilon)
         if q_vals != [] : summary.value.add(tag="Model/Avg Q Value", simple_value= np.mean(q_vals))
         summary.value.add(tag="Model/Time Per Step", simple_value= np.mean(times_per_step))
         summary.value.add(tag="Curricululm/Wall Spawn Ratio", simple_value= wall_ratio)
@@ -133,7 +138,7 @@ if __name__ == "__main__" :
     
     
     ## Init env
-    curriculum_manager = ALPGMM(mins = [0.2, 0.2], maxs = [1.0, 1.0], params = {"fit_rate" : 500,
+    curriculum_manager = ALPGMM(mins = [0.0, 0.0], maxs = [1.0, 1.0], params = {"fit_rate" : 500,
                                                                                 "random_task_ratio" : 0.2 if args_training.enable_auto_curriculum else 1.0}) #, "alp_buffer_size" : 1500})
     env = Game_Env(map_size = args_training.map_size, max_nb_steps_ratio = args_training.max_nb_steps_ratio)
     

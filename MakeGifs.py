@@ -39,7 +39,7 @@ def make_gifs(EPISODES, env, agent, wall_ratio = 0.65, key_elem_ratio = 0.75, mo
         done = False
         
         while not done: 
-            action = agent.act(state, use_softmax=True)
+            action = agent.act(state, use_softmax=False)
             next_state, reward, done, infos = env.step(action)
             state = np.reshape(next_state, [1, -1])
             frames.append(display_for_gif(env, include_paths = False, show = False, title = f"Ep {e} ||"))
@@ -49,7 +49,7 @@ def make_gifs(EPISODES, env, agent, wall_ratio = 0.65, key_elem_ratio = 0.75, mo
     
     if gif_name is None : 
         gif_name = "examples"
-    gif.save(frames, f"reporting\\{model_name_saved}\\{gif_name}.gif", duration=500)
+    gif.save(frames, f"reporting\\{model_name_saved}\\{gif_name}.gif", duration=250)
 
 
 if __name__ == "__main__" :
@@ -63,9 +63,10 @@ if __name__ == "__main__" :
     
     parser = argparse.ArgumentParser(description='Make Gifs After Training')
     parser.add_argument('--model-name', '-m', type=str, 
-                        default='Map8_CurriculumMoreElemSpawn_SeparatePosAndElemSoftmaxAction_RwrdDistStoF__Mar_20_01_49_34',
+                        default='Map8_NewRwrd___Mar_22_16_29_11',
                         help='Name of model to test')
-    parser.add_argument('--EPISODES', '-E', type=int,  default=50, help='Nb of episodes to run')
+    parser.add_argument('--checkpoint-nb', '-cn', type=int,  default=None, help='which checkpoint to load')
+    parser.add_argument('--EPISODES', '-E', type=int,  default=10, help='Nb of episodes to run')
     args = parser.parse_args()
     
     
@@ -76,7 +77,6 @@ if __name__ == "__main__" :
     loaded_config = load_config('config', f"./models/{model_name_saved}/")
     args_training = loaded_config["args_training"]
     
-    EPISODES = 25
     
     env = Game_Env(map_size = args_training.map_size)
     
@@ -86,16 +86,17 @@ if __name__ == "__main__" :
     agent = DQNAgent(state_size = env.state_size, action_size = env.action_size, model_builder = model_builder, args_training = args_training)
     
     ## Load agent
-    agent.load(f"models\\{model_name_saved}\\Model_weights.h5")
+    agent.load(model_name_saved, args.checkpoint_nb)
     
     
-    wall_ratio = 0.75
-    key_elem_ratio = 1.0
-    max_nb_steps_ratio = 0.2
-    agent.set_epsilon(0.0)
+    wall_ratio = 0.65
+    key_elem_ratio = 0.5
+    max_nb_steps_ratio = 0.5
+    agent.set_epsilon(0.1)
+
     
     env.set_max_nb_steps_ratio(max_nb_steps_ratio = max_nb_steps_ratio)
-    make_gifs(EPISODES, env, agent, wall_ratio = wall_ratio, key_elem_ratio=key_elem_ratio, model_name_saved = model_name_saved, gif_name = "Wr075_Er1_SftMx")
+    make_gifs(EPISODES, env, agent, wall_ratio = wall_ratio, key_elem_ratio=key_elem_ratio, model_name_saved = model_name_saved, gif_name = f"Wr{wall_ratio}_Er{key_elem_ratio}_MSr{max_nb_steps_ratio}_Eps{agent.epsilon}")
 
 
 

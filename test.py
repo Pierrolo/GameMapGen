@@ -10,6 +10,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import seaborn as sns
 import time
+import pandas as pd
 
 from DQN import DQNAgent
 from game import Game_Env 
@@ -25,49 +26,60 @@ from keras.backend.tensorflow_backend import set_session
 import importlib
 import gif
 
-def test_model(EPISODES, env, agent, wall_ratio = 0.65, key_elem_ratio = 0.75):
+# def run_test_ep(env, agent):
     
-    rewards = []
-    gen_maps, all_rewards = {}, {}
-    doabilities = []
-    path_lengts_S_to_T, path_lengts_T_to_F = [], []
+
+
+def test_model(EPISODES, env, agent, wall_ratios = [0.65], key_elem_ratios = [0.75], max_nb_steps_ratios = np.arange(0.1,1.05,0.1)):
+
+    gen_maps = []
+    df_reporting = pd.DataFrame(columns=["wall_ratio", "key_elem_ratio", "max_nb_steps_ratio", "reward", "is_doable", 
+                                         "nb_steps", "len_path_lengts_S_to_T", "len_path_lengts_T_to_F"])
     
+    if type(wall_ratios) is float: wall_ratios = [wall_ratios]
+    if type(key_elem_ratios) is float: key_elem_ratios = [key_elem_ratios]
+    if type(max_nb_steps_ratios) is float: max_nb_steps_ratios = [max_nb_steps_ratios]
     
-    for max_nb_steps_ratio in np.arange(0.1,1.05,0.1) :
-        env.set_max_nb_steps_ratio(max_nb_steps_ratio = max_nb_steps_ratio)
-        gen_maps[max_nb_steps_ratio] = []
-        all_rewards[max_nb_steps_ratio] = []
-        for e in range(EPISODES):
-            state = env.reset(test = True, wall_ratio = wall_ratio, key_elem_ratio = key_elem_ratio)
-            state = np.reshape(state, [1, -1])
-            done = False
-            
-            while not done: 
-                action = agent.act(state, use_softmax=False)
-                next_state, reward, done, infos = env.step(action)
-                state = np.reshape(next_state, [1, -1])
-                if done:
-                    break
-            
-            ### Reporting
-            rewards.append([max_nb_steps_ratio, reward])
-            doabilities.append([max_nb_steps_ratio, infos["doable"]])
-            gen_maps[max_nb_steps_ratio].append([state])
-            all_rewards[max_nb_steps_ratio].append([reward])
-            
-            is_doable, path_S_to_T, path_T_to_F = env.is_level_doable()
-            if is_doable:
-                path_lengts_S_to_T.append([max_nb_steps_ratio, len(path_S_to_T)])
-                path_lengts_T_to_F.append([max_nb_steps_ratio, len(path_T_to_F)])
-            
-        print("Ratio: {:.2} Avg Doability: {:.2}"
-              .format(max_nb_steps_ratio, np.mean(np.array(doabilities)[-EPISODES:,1])))
+    for wall_ratio in wall_ratios:
+        for key_elem_ratio in key_elem_ratios : 
+            for max_nb_steps_ratio in max_nb_steps_ratios:
+                for e in range(EPISODES):
+                    dict_to_add = {}
+                    state = env.reset(test = True, wall_ratio = wall_ratio, key_elem_ratio = key_elem_ratio, max_nb_steps_ratio = max_nb_steps_ratio)
+                    dict_to_add["wall_ratio"] = wall_ratio
+                    dict_to_add["key_elem_ratio"] = key_elem_ratio
+                    dict_to_add["max_nb_steps_ratio"] = max_nb_steps_ratio
+                    state = np.reshape(state, [1, -1])
+                    done = False
+                    
+                    while not done: 
+                        action = agent.act(state, use_softmax=False)
+                        next_state, reward, done, infos = env.step(action)
+                        state = np.reshape(next_state, [1, -1])
+                        if done:
+                            break
+                    
+                    ### Reporting
+                    dict_to_add["reward"] = reward
+                    dict_to_add["is_doable"] = infos["doable"]
+                    dict_to_add["nb_steps"] = infos["nb_steps"]
         
-    dict_to_plot = {"Doable":doabilities, "Rewards":rewards, "Lenght S to T":path_lengts_S_to_T, "Lenght T to F":path_lengts_T_to_F}
-    plot_mutliple_over_max_nb_steps_ratio(dict_to_plot, title = "Perfs for varying number of avaiable steps")
+                    gen_maps.append(state)
+                    
+                    is_doable, path_S_to_T, path_T_to_F = env.is_level_doable()
+                    if is_doable:
+                        dict_to_add["len_path_lengts_S_to_T"] = len(path_S_to_T)
+                        dict_to_add["len_path_lengts_T_to_F"] = len(path_T_to_F)
+                        
+                    df_reporting = df_reporting.append(dict_to_add, ignore_index=True)    
+                
+                print("Wall: {:.2}, KeyElem: {:.2}, MaxSteps: {:.2} Avg Doability: {:.2}"
+                      .format(wall_ratio, key_elem_ratio, max_nb_steps_ratio, np.mean(df_reporting["is_doable"].values[-EPISODES:])))
+        
+
     
     
-    return gen_maps, all_rewards
+    return gen_maps, df_reporting
 
 
 if __name__ == "__main__" :
@@ -85,8 +97,9 @@ if __name__ == "__main__" :
     
     parser = argparse.ArgumentParser(description='Test DQN Model')
     parser.add_argument('--model-name', '-m', type=str, 
-                        default='Map8_CurriculumMoreElemSpawn_SeparatePosAndElemSoftmaxAction_RwrdDistStoF__Mar_20_01_49_34',
+                        default='Map8_NewRwrd___Mar_22_16_29_11',
                         help='Name of model to test')
+    parser.add_argument('--checkpoint-nb', '-cn', type=int,  default=None, help='which checkpoint to load')
     parser.add_argument('--EPISODES', '-E', type=int,  default=50, help='Nb of episodes to run')
     args = parser.parse_args()
     
@@ -94,21 +107,14 @@ if __name__ == "__main__" :
     EPISODES = args.EPISODES
     model_name_saved = args.model_name
     
+    ## Map8_RwrdDistStoFsparserMap_EpsMin01_DuelingDQNAvgNoMask_ClipGradNorm1__Mar_21_13_22_15
     ## Map8_SeparatePosAndElemSoftmaxAction_RwrdDistStoFsparserMap__Mar_20_15_57_08 potential to be crazy good
     ## Map8_CurriculumMoreElemSpawn_SeparatePosAndElemSoftmaxAction_RwrdDistStoF__Mar_20_01_49_34 best so far
     ## Map8_SeparatePosAndElemSoftmaxAction_RwrdDistStoF_BigNet__Mar_20_12_37_38
     ## Map8_CurriculumMoreElemSpawn_NoBiasLastLayer__Mar_19_12_30_43 
     ## Map8_CurriculumElemSpawn__Mar_18_19_46_11
     
-    
-    
-    # parser = argparse.ArgumentParser(description='Test DQN Model')
-    # parser.add_argument('--config-fn', '-f', type=str, default='config', help='config file name')
-    # parser.add_argument('--config-dir', '-d', type=str, default=f"./models/{model_name_saved}/", help='config files directory')
-    # args = parser.parse_args()
-
-    
-    
+        
     loaded_config = load_config('config', f"./models/{model_name_saved}/")
     args_training = loaded_config["args_training"]
     
@@ -122,42 +128,44 @@ if __name__ == "__main__" :
     agent = DQNAgent(state_size = env.state_size, action_size = env.action_size, model_builder = model_builder, args_training = args_training)
     
     ## Load agent
-    agent.load(f"models\\{model_name_saved}\\Model_weights.h5")
-    agent.set_epsilon(0.00)
+    agent.load(model_name_saved, args.checkpoint_nb)
+    agent.set_epsilon(0.05)
     
+    wall_ratios = np.arange(0.1,1.05,0.2)
+    key_elem_ratios = [0.5]
+    max_nb_steps_ratios = np.arange(0.1,1.05,0.2)
     
-    gen_maps, all_rewards = test_model(EPISODES, env, agent, wall_ratio = 0.65, key_elem_ratio=0.5)
+    gen_maps, df_reporting = test_model(EPISODES, env, agent, wall_ratios = wall_ratios, key_elem_ratios = key_elem_ratios, max_nb_steps_ratios = max_nb_steps_ratios)
+
+    for col_name in ["max_nb_steps_ratio", "wall_ratio"] : 
+        dict_to_plot = {"Doable": np.array(df_reporting[[col_name, "is_doable"]].values, dtype = np.float32),
+                        "Rewards": np.array(df_reporting[[col_name, "reward"]].values, dtype = np.float32),
+                        "Lenght S to T": np.array(df_reporting[[col_name, "len_path_lengts_S_to_T"]].values, dtype = np.float32),
+                        "Lenght T to F": np.array(df_reporting[[col_name, "len_path_lengts_T_to_F"]].values, dtype = np.float32)
+                        }
+        plot_mutliple_over_max_nb_steps_ratio(dict_to_plot, title = f"Perfs for varying number of {col_name}")
 
 
     k_best = 5
-    maps = np.array(list(gen_maps.values())).reshape(-1, args_training.map_size**2)
-    rwrds = np.array(list(all_rewards.values())).reshape(-1)
-    ind_k_vest_rewrd = np.argpartition(rwrds, -k_best)[-k_best:]
-    best_rwrds_values = rwrds[ind_k_vest_rewrd]
-    print(f"Avg Best Rwrd: {round(np.mean(best_rwrds_values),3)}")
-    for index in ind_k_vest_rewrd:
+    maps = np.array(gen_maps).reshape(-1, args_training.map_size**2)
+    best_maps= df_reporting.nlargest(n = k_best, columns = "reward")
+    print(f"Avg Best Rwrd: {round(np.mean(best_maps.reward),3)}")
+    for index in best_maps.index:
         env.set_current_map(maps[index])
         env.display()
     
     
-    
-    
-    
-    
-    
-    
-    """
-    k_best = 3
-    for max_step_value, rewards in all_rewards.items() :
-        gen_state = gen_maps[max_step_value]
-        ind_k_vest_rewrd = np.argpartition(np.array(rewards).reshape(-1), -k_best)[-k_best:]
-        best_rwrds_values = np.array(rewards).reshape(-1)[ind_k_vest_rewrd]
-        print(f"Ratio: {round(max_step_value, 2)} Avg Best Rwrd: {round(np.mean(best_rwrds_values),3)}")
-        for index in ind_k_vest_rewrd:
-            env.set_current_map(np.array(gen_state)[index][0][0])
-            env.display()
-    """
-            
-            
+    if len(df_reporting.max_nb_steps_ratio.unique()) > 1 and len(df_reporting.wall_ratio.unique()) > 1:
+        df_reporting.is_doable = df_reporting.is_doable.astype(float)
+        for col_to_agg in ["reward", "is_doable"]:
+            table = pd.pivot_table(np.round(df_reporting, 2), values=col_to_agg, index=['wall_ratio'],
+                        columns=['max_nb_steps_ratio'], aggfunc=np.mean)
+            sns.heatmap(table)
+            plt.title(f"Avg {col_to_agg}")
+            plt.show()
+        
+        
+        
+        
 
 
