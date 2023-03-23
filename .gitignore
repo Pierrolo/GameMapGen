@@ -3,6 +3,7 @@ __pycache__/
 .spyproject/
 *.egg-info/
 
+reporting_saved/
 
 reporting/*
 !reporting/Example_model/

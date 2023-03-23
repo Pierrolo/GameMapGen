@@ -10,7 +10,7 @@ from tensorflow.keras import Model
 from tensorflow.keras.layers import Lambda
 
 
-CONV_SIZE = 16
+CONV_SIZE = 32
 
 delta = 1.0
 def huber_loss(y_true, y_pred):
@@ -43,8 +43,10 @@ def U_Net(convs_input):
         conv_downs.append(current_conv)
     
     dense = tf.keras.layers.Flatten()(current_conv)
+    curr_shape = int(dense.shape[1])
     for i in range(3): 
-        dense = tf.keras.layers.Dense(int(dense.shape[1]), activation = "sigmoid")(dense)
+        dense = tf.keras.layers.Dense(CONV_SIZE, activation = "sigmoid")(dense)
+    dense = tf.keras.layers.Dense(curr_shape, activation = "sigmoid")(dense)
     
     conv_up = tf.keras.layers.Reshape((int(current_conv.shape[1]), int(current_conv.shape[2]), CONV_SIZE))(dense)
     for i in range(int(np.log(int(convs_input.shape[1]))/np.log(2)-1)):

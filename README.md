@@ -22,7 +22,7 @@ As for test.py and MakeGifs.py, a model name must be provided, and the script wi
 
 
 In the description below, the parameters you can change are written in __bold__.
-
+If you want to run this code, you can find [here](https://github.com/Pierrolo/GameMapGen/blob/main/content/environment_conda.yml) the conda env file with all the packages.
 
 
 
@@ -89,11 +89,28 @@ In test.py, the agent is ask to play several episodes with varying lenghts and i
 [image_test_1]: https://github.com/Pierrolo/GameMapGen/blob/main/content/test_results_1.png "test_results_1"
 [image_test_2]: https://github.com/Pierrolo/GameMapGen/blob/main/content/test_results_2.png "test_results_2"
 
-![test_results_1][image_test_1]
-![test_results_2][image_test_2]
+![test_results_1][image_test_1] ![test_results_2][image_test_2]
 
 In MakeGifs.py, the agent will play a few number of episodes which will be used to generate a gif. This gif will be saved in "reporting\ __model_name__"; next to the tensorboard file.
 
 
 
+## Future Possible Improvements
+
+There are quite a few issues with the current approach and several improvements could me made.
+
+
+1. DQN is deterministic. This creates quite a few problems. First the generated maps depend highly on th initial state, therefor improving the intial state generation would drastically improve the be performance of the agent.
+Second, this deterministic nature make is hard to perform exploration. At the beginning of the training, the first successul maps are quite empty without walls; this create an agent which learns to generate one of each key elem and then somewhat randomly remove walls
+To address this, using an actor critic with a probabilistic policy could help. Furthermore, the actor might be encoded differently, for instance, do a softmax beteen each tile and another between eahc position and the product is your policy
+
+2. RL for this type of problem isn't necessarly best suited. A GAN appraoch which would generate teh map in a single step, and then be rewarded like the RL agent, based on the quality of the map, would probably perform better.
+
+3. Improve the state space. For now, the state is just the map. Adding more informations, for instance aggregated info such as the number of each type of tile,wether thare is a path between the key elems and how long is that path, the number of steps left in the episode. All this would help the agent perfomr better
+
+4. Improve the action masking, for instance forbif the agent to change a tile it just changed, or it changed in the last X steps.
+
+5. The tiles are put through an embedding layer, maybe use it also when outputting the action, like output a vector of the same size as the embedding size and look at which of the tiles is closer to it and do that action
+
+6. Giving the fact that the env is very small, it would make sens to run parrallel environment, they won't evne need to be asynchronous.
 

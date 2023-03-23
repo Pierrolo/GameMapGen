@@ -65,40 +65,49 @@ class DQNAgent:
         self.memory.add((state, action, reward, next_state, done))
 
 
+    def get_softmax_ac(self, act_values, state):
+        if state is None :  ## No masking
+            act_values_softmax=softmax(act_values_softmax)
+            a = np.random.choice(act_values_softmax[0],p=act_values_softmax[0])
+            action = np.random.choice(np.where(act_values_softmax == a)[1])
+        else : 
+            curr_state = np.array(state[0], dtype = np.int16)
+            action_mask = np.zeros((curr_state.shape[0],5))
+            action_mask[np.arange(curr_state.size), curr_state] = 1
+            action_mask = action_mask.reshape(1,-1)
+            act_values_softmax = act_values.copy()
+            act_values_softmax[action_mask==1] = np.nan
+            act_values_softmax=softmax(act_values_softmax)
+            act_values_softmax[np.isnan(act_values_softmax)]=0
+            a = np.random.choice(act_values_softmax[0],p=act_values_softmax[0])
+            action = np.random.choice(np.where(act_values_softmax == a)[1])        
+        return action
+
+
+    def get_random_action(self, state = None):
+        if state is None : ## No masking
+            action = random.randrange(self.action_size)
+        else :
+            curr_state = np.array(state[0], dtype = np.int16)
+            action_mask = np.zeros((curr_state.shape[0],5))
+            action_mask[np.arange(curr_state.size), curr_state] = 1
+            action=  np.random.choice(np.where(1-action_mask.reshape(-1))[0])
+        return action
+
     def act(self, state, use_softmax = False, return_q_value = False):
         if np.random.rand() <= self.epsilon:
-            if self.args_training.mask_useless_action  : 
-                curr_state = np.array(state[0], dtype = np.int16)
-                action_mask = np.zeros((curr_state.shape[0],5))
-                action_mask[np.arange(curr_state.size), curr_state] = 1
-                action=  np.random.choice(np.where(1-action_mask.reshape(-1))[0])
-            else :
-                action = random.randrange(self.action_size)
+            if use_softmax:
+                act_values = self.model.predict(state)  
+                action = self.get_softmax_ac(act_values, state = state if self.args_training.mask_useless_action else None)
+            else : 
+                action = self.get_random_action(state = state if self.args_training.mask_useless_action else None)
             if return_q_value : 
                 q_val = None
-
         else :
-            act_values = self.model.predict(state)
-            
-            if use_softmax : 
-                curr_state = np.array(state[0], dtype = np.int16)
-                action_mask = np.zeros((curr_state.shape[0],5))
-                action_mask[np.arange(curr_state.size), curr_state] = 1
-                action_mask = action_mask.reshape(1,-1)
-                act_values_softmax = act_values.copy()
-                act_values_softmax[action_mask==1] = np.nan
-                act_values_softmax=softmax(act_values_softmax)
-                act_values_softmax[np.isnan(act_values_softmax)]=0
-                a = np.random.choice(act_values_softmax[0],p=act_values_softmax[0])
-                action = np.random.choice(np.where(act_values_softmax == a)[1])
-                    
-            else :             
-                action = np.argmax(act_values[0]) 
-            
+            act_values = self.model.predict(state)  
+            action = np.argmax(act_values[0]) 
             if return_q_value : 
                 q_val = np.max(act_values)
-        
-        
         if return_q_value :  ## for reporting purposes
             return action, q_val
         else : 
