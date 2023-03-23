@@ -85,7 +85,7 @@ def test_model(EPISODES, env, agent, wall_ratios = [0.65], key_elem_ratios = [0.
 if __name__ == "__main__" :
     
     config = tf.ConfigProto()
-    config.gpu_options.per_process_gpu_memory_fraction = 0.7 # fraction of memory
+    config.gpu_options.per_process_gpu_memory_fraction = 0.2 # fraction of memory
     config.gpu_options.allow_growth = True
     config.gpu_options.visible_device_list = "0"
     
@@ -97,7 +97,7 @@ if __name__ == "__main__" :
     
     parser = argparse.ArgumentParser(description='Test DQN Model')
     parser.add_argument('--model-name', '-m', type=str, 
-                        default='Map8_Unet_NewRwrd__Mar_22_19_57_27',
+                        default='Map8_CurriculumMoreElemSpawn_SeparatePosAndElemSoftmaxAction_RwrdDistStoF__Mar_20_01_49_34',
                         help='Name of model to test')
     parser.add_argument('--checkpoint-nb', '-cn', type=int,  default=None, help='which checkpoint to load')
     parser.add_argument('--EPISODES', '-E', type=int,  default=50, help='Nb of episodes to run')
@@ -107,12 +107,8 @@ if __name__ == "__main__" :
     EPISODES = args.EPISODES
     model_name_saved = args.model_name
     
-    ## Map8_RwrdDistStoFsparserMap_EpsMin01_DuelingDQNAvgNoMask_ClipGradNorm1__Mar_21_13_22_15
-    ## Map8_SeparatePosAndElemSoftmaxAction_RwrdDistStoFsparserMap__Mar_20_15_57_08 potential to be crazy good
+    ## Map8_Unet_NewRwrd__Mar_22_19_57_27
     ## Map8_CurriculumMoreElemSpawn_SeparatePosAndElemSoftmaxAction_RwrdDistStoF__Mar_20_01_49_34 best so far
-    ## Map8_SeparatePosAndElemSoftmaxAction_RwrdDistStoF_BigNet__Mar_20_12_37_38
-    ## Map8_CurriculumMoreElemSpawn_NoBiasLastLayer__Mar_19_12_30_43 
-    ## Map8_CurriculumElemSpawn__Mar_18_19_46_11
     
         
     loaded_config = load_config('config', f"./models/{model_name_saved}/")

@@ -2,5 +2,10 @@
 __pycache__/
 .spyproject/
 *.egg-info/
-reporting/
-models/
+
+
+reporting/*
+!reporting/Example_model/
+
+models/*
+!models/Example_model/

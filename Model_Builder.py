@@ -10,7 +10,7 @@ from tensorflow.keras import Model
 from tensorflow.keras.layers import Lambda
 
 
-CONV_SIZE = 32
+CONV_SIZE = 16
 
 delta = 1.0
 def huber_loss(y_true, y_pred):
@@ -38,17 +38,19 @@ def U_Net(convs_input):
     current_conv = convs_input
     for i in range(int(np.log(int(convs_input.shape[1]))/np.log(2)-1)):
         current_conv = tf.keras.layers.Convolution2D(filters = CONV_SIZE, kernel_size = [2,2], strides = (1,1), activation = "relu", padding = "same")(current_conv)
+        current_conv = tf.keras.layers.Convolution2D(filters = CONV_SIZE, kernel_size = [2,2], strides = (1,1), activation = "relu", padding = "same")(current_conv)
         current_conv = tf.keras.layers.Convolution2D(filters = CONV_SIZE, kernel_size = [2,2], strides = (2,2), activation = "relu", padding = "same")(current_conv)
         conv_downs.append(current_conv)
     
     dense = tf.keras.layers.Flatten()(current_conv)
-    for i in range(2): 
+    for i in range(3): 
         dense = tf.keras.layers.Dense(int(dense.shape[1]), activation = "sigmoid")(dense)
     
     conv_up = tf.keras.layers.Reshape((int(current_conv.shape[1]), int(current_conv.shape[2]), CONV_SIZE))(dense)
     for i in range(int(np.log(int(convs_input.shape[1]))/np.log(2)-1)):
         conv_up = tf.keras.layers.Concatenate()([conv_up, conv_downs[-(i+1)]])
-        conv_up = tf.keras.layers.Conv2DTranspose(filters = CONV_SIZE, kernel_size = [2,2], strides = (1,1), activation = "relu", padding = "same")(conv_up)
+        conv_up = tf.keras.layers.Convolution2D(filters = CONV_SIZE, kernel_size = [2,2], strides = (1,1), activation = "relu", padding = "same")(conv_up)
+        conv_up = tf.keras.layers.Convolution2D(filters = CONV_SIZE, kernel_size = [2,2], strides = (1,1), activation = "relu", padding = "same")(conv_up)
         conv_up = tf.keras.layers.Conv2DTranspose(filters = CONV_SIZE, kernel_size = [2,2], strides = (2,2), activation = "relu", padding = "same")(conv_up)
     
     conv_out = conv_up
@@ -154,8 +156,7 @@ def get_model_builder(env, args_training):
             conv_out = U_Net(convs_input = convs_input)  
 
 
-        if args_training.dueling_arch :
-            
+        if args_training.dueling_arch :            
             ## Value function stream
             conv_val = conv_out
             for _ in range(int(np.log(map_size)/np.log(2)-1)) :
@@ -165,26 +166,21 @@ def get_model_builder(env, args_training):
                 dense_val = tf.keras.layers.Dense(neurons, activation = "relu")(dense_val)
             v_function = tf.keras.layers.Dense(1, activation = None)(dense_val)
             
-            
             ## Advantage function stream
             conv_adv = conv_out
             for _ in range(3) : 
                 conv_adv = tf.keras.layers.Convolution2D(filters = CONV_SIZE, kernel_size = [2,2], strides = (1,1), activation = "relu", padding = "same")(conv_adv)
             conv_adv = tf.keras.layers.Convolution2D(filters = nb_of_elements, kernel_size = [1,1], strides = (1,1), activation = None, padding = "same")(conv_adv)
             
-            
-            
             conv_action = Lambda(lambda x : tf.reshape(x[0], (-1,1,1,1)) + (x[1] - tf.reduce_mean(x[1] * (1-x[2]), axis = (1,2,3), keepdims=True)))((v_function, conv_adv, state_reshapped_square_one_hot))
-            """
+            
             if args_training.mask_useless_action : 
-                ## make the mean over the advantage over the unmasked actions only
-                conv_adv = Lambda(lambda x: x[0] - x[1]*tf.stop_gradient(tf.math.reduce_max(tf.abs(x[0]), (1,2,3), keepdims = True)))((conv_adv, state_reshapped_square_one_hot))
-                # norm adv with max
-                conv_action = Lambda(lambda x : tf.reshape(x[0], (-1,1,1,1)) + (x[1] - tf.reduce_max(x[1], axis = (1,2,3), keepdims=True)))((v_function, conv_adv))
+                # norm adv with mean, masking the masked actions
+                conv_action = Lambda(lambda x : tf.reshape(x[0], (-1,1,1,1)) + (x[1] - tf.reduce_mean(x[1] * (1-x[2]), axis = (1,2,3), keepdims=True)))((v_function, conv_adv, state_reshapped_square_one_hot))
             else : 
                 # norm adv with mean
                 conv_action = Lambda(lambda x : tf.reshape(x[0], (-1,1,1,1)) + (x[1] - tf.reduce_mean(x[1], axis = (1,2,3), keepdims=True)))((v_function, conv_adv))
-            """
+            
 
         else : 
             ## Output as a conv layer still

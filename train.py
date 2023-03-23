@@ -31,13 +31,8 @@ from keras.backend.tensorflow_backend import set_session
 
 
 def train_model(model_name, env, agent, curriculum_manager, tb_filewriter, args_training) : 
-    
-    # rewards = [] l
-    # loss_values, nbs_of_steps, doabilities = [], [], []
-    # wall_ratios_spawn, key_elem_ratio_spawn, max_nb_steps_ratios = [], [], []
-    train_start_time = time.time()
-    
     print(f"Starting Training, model name: {model_name}")
+    train_start_time = time.time()
     for e in tqdm(range(args_training.EPISODES+1)):
         
         current_task = curriculum_manager.sample_task()
@@ -98,7 +93,7 @@ def train_model(model_name, env, agent, curriculum_manager, tb_filewriter, args_
         tb_filewriter.flush()
                 
         
-        if e%500==0:
+        if e%500==0 and args_training.verbose:
             print("episode: {}/{}, score: {:.2}, doable: {}, e: {:.2}"
                   .format(e, args_training.EPISODES, reward, infos["doable"], agent.epsilon))
             env.display()
@@ -114,7 +109,7 @@ def train_model(model_name, env, agent, curriculum_manager, tb_filewriter, args_
 if __name__ == "__main__" :
     
     config = tf.ConfigProto()
-    config.gpu_options.per_process_gpu_memory_fraction = 0.7 # fraction of memory
+    config.gpu_options.per_process_gpu_memory_fraction = 0.8 # fraction of memory
     config.gpu_options.allow_growth = True
     config.gpu_options.visible_device_list = "0"
     

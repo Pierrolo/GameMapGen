@@ -48,7 +48,6 @@ class Map(object):
 
     def generate_random_map_test(self, wall_ratio = 0.65, key_elem_ratio = 0.75):
         # self.map_array = np.zeros((self.map_size,self.map_size), dtype = np.int16) * EMPTY
-        
         p = np.array([(1-wall_ratio) * ((self.map_size**2 - 3*key_elem_ratio)/(self.map_size**2)),
                       wall_ratio * ((self.map_size**2 - 3*key_elem_ratio)/(self.map_size**2)),
                       key_elem_ratio/(self.map_size**2),
@@ -59,9 +58,6 @@ class Map(object):
                 
 
     def generate_random_map_train(self, wall_ratio = 0.33, key_elem_ratio = 1.0):
-        # self.map_array = np.zeros((self.map_size,self.map_size), dtype = np.int16) * EMPTY
-        
-        
         p = np.array([(1-wall_ratio) * ((self.map_size**2 - 3*key_elem_ratio)/(self.map_size**2)),
                       wall_ratio * ((self.map_size**2 - 3*key_elem_ratio)/(self.map_size**2)),
                       key_elem_ratio/(self.map_size**2),
@@ -69,15 +65,6 @@ class Map(object):
                       key_elem_ratio/(self.map_size**2)])
         p = p/sum(p)
         self.map_array = np.random.choice([EMPTY, WALL, START, FINISH, TREASURE], p = p, size = (self.map_size,self.map_size))
-        
-                
-        """
-        for _ in range(int((self.map_size**2)*wall_ratio)) :
-            self.spawn_randomly_element(WALL)
-        for key_elem in [START, FINISH, TREASURE]:
-            if np.random.rand() < key_elem_ratio:
-                self.spawn_randomly_element(key_elem)
-        """
 
 
     def change_tile(self, tile_pos, new_elem):
@@ -274,6 +261,7 @@ class Game_Env(object):
 
 
     def get_infos(self):
+        ## for reporting and such
         infos = {}
         infos["doable"] = self.is_level_doable()[0]
         infos["nb_steps"] = self.nb_steps
@@ -284,6 +272,7 @@ class Game_Env(object):
 
 
     def is_level_doable(self):
+        ## Is the level doable, if so return the paths as well
         if self.current_map.check_all_key_elements_present() :
             path_S_to_T = self.get_path(from_ = START, to_ = TREASURE, avoid = [WALL, FINISH])
             path_T_to_F = self.get_path(from_ = TREASURE, to_ = FINISH, avoid = [WALL])
@@ -301,26 +290,6 @@ class Game_Env(object):
         one_each_key_element = self.current_map.check_all_key_elements_present()
         
         
-        """
-        if START in unique_counts_of_elems.keys() and unique_counts_of_elems[START] == 1 and TREASURE in unique_counts_of_elems.keys() and unique_counts_of_elems[TREASURE] == 1:
-            path_S_to_T = self.get_path(from_ = START, to_ = TREASURE, avoid = [WALL, FINISH])
-        else : 
-            path_S_to_T = None
-        if TREASURE in unique_counts_of_elems.keys() and unique_counts_of_elems[TREASURE] == 1 and FINISH in unique_counts_of_elems.keys() and unique_counts_of_elems[FINISH] == 1 :
-            path_T_to_F = self.get_path(from_ = TREASURE, to_ = FINISH, avoid = [WALL])
-        else : 
-            path_T_to_F = None
-        if path_S_to_T is not None and path_T_to_F is not None : 
-            quality += 2.5
-            quality += 5*( len(path_S_to_T) + len(path_T_to_F)) / (self.map_size * self.map_size)
-            if WALL in unique_counts_of_elems.keys():            
-                quality += 3 * unique_counts_of_elems[WALL]/(self.map_size * self.map_size)
-        else : 
-            quality -= 5.0
-        quality = quality/5
-        """
-        
-        
         ## Presence of each key element, only once
         for key_elem in [START, FINISH, TREASURE] : 
             if key_elem in unique_counts_of_elems.keys() :
@@ -331,17 +300,20 @@ class Game_Env(object):
         
         
         if not one_each_key_element :
+            ## there isn't one and only one of each key element
             quality -= 1.5
         else : 
             path_S_to_T = self.get_path(from_ = START, to_ = TREASURE, avoid = [WALL, FINISH])
             path_T_to_F = self.get_path(from_ = TREASURE, to_ = FINISH, avoid = [WALL])        
             
             if path_S_to_T is None or path_T_to_F is None :
+                ## the level is not doable
                 quality -= 1.0
             else : 
                 quality += 5*len(np.unique(path_T_to_F + path_S_to_T, axis = 0)) / (self.map_size**2)
                 
-                if WALL in unique_counts_of_elems.keys():            
+                if WALL in unique_counts_of_elems.keys():         
+                    ## to increase the nb of walls
                     quality += 2.5 * unique_counts_of_elems[WALL]/(self.map_size**2)
                     
         
@@ -399,11 +371,14 @@ class Game_Env(object):
 
 
     def get_done(self):
+        ## is the episode done or not
         if self.nb_steps >= self.map_size*self.map_size * self.max_nb_steps_ratio:
             return True
+        
         doable, _, _ = self.is_level_doable()
         if doable:
             return True
+        
         return False
 
 
@@ -419,6 +394,7 @@ class Game_Env(object):
 
 
     def display(self, include_paths = True, show = True, title = ""):
+        ## plot the current map, with the paths is doable
         if include_paths :
             doable, path_S_to_T, path_T_to_F = self.is_level_doable()
         else : 

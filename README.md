@@ -68,7 +68,8 @@ The loss function __loss_fn__ can either be mse or huber. The optimizer __opt_ty
 python train.py --config-fn --config-dir
 ```
 You can create your own config file, although it is highly rencommanded you only run ``` python train.py ``` and change the congif file directly. 
-During trianing, a tensorboard file will be generated in "reporting \ __model_name__ \".
+
+During training, a tensorboard file ([examlpe here](https://github.com/Pierrolo/GameMapGen/blob/main/content/tensorboard_example.PNG)) will be generated in "reporting \ __model_name__ \".
 Weights will be saved regularly into "models \ __model_name__ \". In addition to the weights, the config file will be saved to be able to use it later for testing. Finally, the python script responsible for building the model is also saved. This is a bit unhordotox, but this allows to easily recreate the same model and apply the saved weights on it. Saving the model architecture directly is not feasible in most cases, as our approach relies on several Lambda keras layers.
 
 
