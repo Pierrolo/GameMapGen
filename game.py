@@ -245,8 +245,10 @@ class Game_Env(object):
         ## The state is the current map array, flatten
         current_map_array = self.current_map.map_array
         current_map_array_flatten = np.array(current_map_array.reshape(-1), dtype = np.float32)
+        state = current_map_array_flatten
         
-        return current_map_array_flatten
+        
+        return state
     
     
     

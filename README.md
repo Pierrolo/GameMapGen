@@ -83,7 +83,7 @@ python  MakeGifs.py --model-name --checkpoint-nb --EPISODES
 ```
 model-name is the name of the trained model, checkpoint-nb is an int referencing which of the checkpoint to load (if null then it takes the most recent one) and EPISODES the number of episodes to run per combination of reset parameters.
 
-After providing a __model_name__ to be tested, when executing the script test.py or MakeGifs.py, the script will fetch the associated model builder and the saved weights specified to re-create the desired agent.
+After providing a __model_name__ (we provide an already trained model, on map size = 8, called Example_model) to be tested, when executing the script test.py or MakeGifs.py, the script will fetch the associated model builder and the saved weights specified to re-create the desired agent.
 In test.py, the agent is ask to play several episodes with varying lenghts and initial state parameters. subsequently it will produce a a few reporting plots and the best maps it generated.
 
 [image_test_1]: https://github.com/Pierrolo/GameMapGen/blob/main/content/test_results_1.png "test_results_1"
