@@ -10,6 +10,7 @@
 
 
 DQN applied to grid world map generation, with many different parameters to be changed, using keras with tensorflow backend.
+If you want to run this code, you can find [here](https://github.com/Pierrolo/GameMapGen/blob/main/content/environment_conda.yml) the conda env file with all the packages.
 
 
 Three files to be run :
@@ -22,7 +23,7 @@ As for test.py and MakeGifs.py, a model name must be provided, and the script wi
 
 
 In the description below, the parameters you can change are written in __bold__.
-If you want to run this code, you can find [here](https://github.com/Pierrolo/GameMapGen/blob/main/content/environment_conda.yml) the conda env file with all the packages.
+
 
 
 
