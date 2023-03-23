@@ -4,7 +4,6 @@ __pycache__/
 *.egg-info/
 
 reporting_saved/
-reportin_saved/
 
 reporting/*
 !reporting/Example_model/
