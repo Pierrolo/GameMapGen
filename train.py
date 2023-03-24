@@ -42,12 +42,14 @@ def train_model(model_name, env, agent, curriculum_manager, tb_filewriter, args_
         
         done = False
         times_per_step, rewards_ep, q_vals = [], [], []
+        tile_id_played = {i : 0 for i in range(len(env.all_elements))}
         while not done: 
             start_step_time = time.time()
             action, max_q_val = agent.act(state, return_q_value = True, use_softmax = args_training.action_select_softmax)
             next_state, reward, done, infos = env.step(action)
             rewards_ep.append(reward)
             if max_q_val is not None : q_vals.append(max_q_val)
+            tile_id_played[infos["tile_played_id"]] += 1
             next_state = np.reshape(next_state, [1, -1])
             agent.remember(state, action, reward, next_state, done)
             state = next_state
@@ -86,6 +88,7 @@ def train_model(model_name, env, agent, curriculum_manager, tb_filewriter, args_
         # summary.value.add(tag="Perfs/Epsilon", simple_value= agent.epsilon)
         if q_vals != [] : summary.value.add(tag="Model/Avg Q Value", simple_value= np.mean(q_vals))
         summary.value.add(tag="Model/Time Per Step", simple_value= np.mean(times_per_step))
+        for elem_id in env.all_elements : summary.value.add(tag=f"Model/Tile_{elem_id}_ratio", simple_value= tile_id_played[elem_id]/sum(tile_id_played.values()))
         summary.value.add(tag="Curricululm/Wall Spawn Ratio", simple_value= wall_ratio)
         summary.value.add(tag="Curricululm/Elems Spawn Ratio", simple_value= key_elem_ratio)
         # summary.value.add(tag="Curricululm/Max Nb Steps Ratio", simple_value= max_nb_steps_ratio)

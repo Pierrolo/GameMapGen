@@ -116,3 +116,5 @@ To address this, using an actor critic with a probabilistic policy could help. F
 6. Giving the fact that the env is very small, it would make sens to run parrallel environment, they won't evne need to be asynchronous.
 
 7. Difficulty assessment. We use A* to find the paths (S to T and T to F). In addition to reporting the path, we might report the number of iteration need to find it, this could be a computation of how difficult the map is, and might be used to orient the reward toward more difficult maps.
+
+8. Add more reporting. During training, compute the q values for each tile type and report it, looking as gif the agent seem to only be a bit better than random...

@@ -108,6 +108,20 @@ def FractalNet(convs_input ):
 
 
 
+def build_head_cross_prod(conv_in, nb_of_elements = 5):
+    tile_pred =  tf.keras.layers.Dense(CONV_SIZE, activation = "softmax")(tf.keras.layers.Flatten()(conv_in))
+    tile_pred =  tf.keras.layers.Dense(nb_of_elements, activation = None)(tile_pred)
+    
+    pos_pred = tf.keras.layers.Convolution2D(filters = CONV_SIZE, kernel_size = [2,2], strides = (1,1), activation = "softmax", padding = "same")(conv_in)
+    pos_pred = tf.keras.layers.Convolution2D(filters = 1, kernel_size = [1,1], strides = (1,1), activation = None, padding = "same")(pos_pred)
+    
+    tile_pos_prod_pred = Lambda(lambda x : x[0] * tf.reshape(x[1], (-1, 1,1, nb_of_elements))  )(( pos_pred , tile_pred))
+    
+    
+    return tile_pos_prod_pred
+
+
+
 
 def get_model_builder(env, args_training):
     
@@ -156,26 +170,30 @@ def get_model_builder(env, args_training):
             conv_out = FractalNet(convs_input = convs_input)
         elif args_training.model_type == "UNet":
             conv_out = U_Net(convs_input = convs_input)  
-
-
-        if args_training.dueling_arch :            
+            
+        
+        if args_training.dueling_arch :
             ## Value function stream
             conv_val = conv_out
             for _ in range(int(np.log(map_size)/np.log(2)-1)) :
                 conv_val = tf.keras.layers.Convolution2D(filters = CONV_SIZE, kernel_size = [2,2], strides = (2,2), activation = "relu", padding = "same")(conv_val)
             dense_val = tf.keras.layers.Flatten()(conv_val)
-            for neurons in [CONV_SIZE*2,CONV_SIZE,CONV_SIZE//2]: 
+            for neurons in [CONV_SIZE]: 
                 dense_val = tf.keras.layers.Dense(neurons, activation = "relu")(dense_val)
             v_function = tf.keras.layers.Dense(1, activation = None)(dense_val)
             
+            
             ## Advantage function stream
             conv_adv = conv_out
-            for _ in range(3) : 
+            for _ in range(1) : 
                 conv_adv = tf.keras.layers.Convolution2D(filters = CONV_SIZE, kernel_size = [2,2], strides = (1,1), activation = "relu", padding = "same")(conv_adv)
-            conv_adv = tf.keras.layers.Convolution2D(filters = nb_of_elements, kernel_size = [1,1], strides = (1,1), activation = None, padding = "same")(conv_adv)
+            if args_training.head_prod_tile_pos :
+                conv_adv = build_head_cross_prod(conv_adv)
+            else : 
+                conv_adv = tf.keras.layers.Convolution2D(filters = nb_of_elements, kernel_size = [1,1], strides = (1,1), activation = None, padding = "same")(conv_adv)
+            
             
             conv_action = Lambda(lambda x : tf.reshape(x[0], (-1,1,1,1)) + (x[1] - tf.reduce_mean(x[1] * (1-x[2]), axis = (1,2,3), keepdims=True)))((v_function, conv_adv, state_reshapped_square_one_hot))
-            
             if args_training.mask_useless_action : 
                 # norm adv with mean, masking the masked actions
                 conv_action = Lambda(lambda x : tf.reshape(x[0], (-1,1,1,1)) + (x[1] - tf.reduce_mean(x[1] * (1-x[2]), axis = (1,2,3), keepdims=True)))((v_function, conv_adv, state_reshapped_square_one_hot))
@@ -186,7 +204,11 @@ def get_model_builder(env, args_training):
 
         else : 
             ## Output as a conv layer still
-            conv_action = tf.keras.layers.Convolution2D(filters = nb_of_elements, kernel_size = [1,1], strides = (1,1), activation = None, padding = "same", use_bias=False)(conv_out)
+            if args_training.head_prod_tile_pos :
+                conv_action = build_head_cross_prod(conv_out)
+            else : 
+                conv_action = tf.keras.layers.Convolution2D(filters = nb_of_elements, kernel_size = [1,1], strides = (1,1), activation = None, padding = "same", use_bias=False)(conv_out)
+            
             
         ## Mask useless actions
         if args_training.mask_useless_action : 

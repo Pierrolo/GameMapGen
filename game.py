@@ -234,7 +234,7 @@ class Game_Env(object):
         
         ## Update what needs to be updated each steps
         self.current_quality = self.get_quality()
-        infos = self.get_infos()
+        infos = self.get_infos(action = action)
         
         self.nb_steps += 1
         
@@ -262,13 +262,18 @@ class Game_Env(object):
         return reward
 
 
-    def get_infos(self):
+    def get_infos(self, action = None):
         ## for reporting and such
         infos = {}
         infos["doable"] = self.is_level_doable()[0]
         infos["nb_steps"] = self.nb_steps
         infos["quality"] = self.get_quality()
         
+        if action is not None : 
+            tile_pos, elem_id = self.decode_action_wide(action)
+            infos["tile_played_id"] = elem_id
+            
+            
         return infos
 
 
@@ -312,11 +317,12 @@ class Game_Env(object):
                 ## the level is not doable
                 quality -= 1.0
             else : 
-                quality += 5*len(np.unique(path_T_to_F + path_S_to_T, axis = 0)) / (self.map_size**2)
+                # quality += 5*len(np.unique(path_T_to_F + path_S_to_T, axis = 0)) / (self.map_size**2)
+                quality += 5*len(path_T_to_F + path_S_to_T) / (self.map_size**2)
                 
                 if WALL in unique_counts_of_elems.keys():         
                     ## to increase the nb of walls
-                    quality += 2.5 * unique_counts_of_elems[WALL]/(self.map_size**2)
+                    quality += 1.5 * unique_counts_of_elems[WALL]/(self.map_size**2)
                     
         
         
