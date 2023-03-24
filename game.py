@@ -212,11 +212,15 @@ class Game_Env(object):
     def reset(self, wall_ratio = 0.33, key_elem_ratio = 0.5, max_nb_steps_ratio = None, test = False):
         if max_nb_steps_ratio is not None : 
             self.set_max_nb_steps_ratio(max_nb_steps_ratio)
-        if test :
-            self.current_map.generate_random_map_test(wall_ratio = wall_ratio, key_elem_ratio = key_elem_ratio)
-        else :
-            self.current_map.generate_random_map_train(wall_ratio = wall_ratio, key_elem_ratio = key_elem_ratio)
-        
+            
+        doable = False
+        while not doable : 
+            if test :
+                self.current_map.generate_random_map_test(wall_ratio = wall_ratio, key_elem_ratio = key_elem_ratio)
+            else :
+                self.current_map.generate_random_map_train(wall_ratio = wall_ratio, key_elem_ratio = key_elem_ratio)
+            doable, _, _ = self.is_level_doable()
+            
         self.nb_steps = 0
         self.current_quality = self.get_quality()
         
@@ -305,7 +309,7 @@ class Game_Env(object):
                 else : 
                     quality -= 2*unique_counts_of_elems[key_elem] / (self.map_size**2)
         
-        
+        """
         if not one_each_key_element :
             ## there isn't one and only one of each key element
             quality -= 1.5
@@ -322,19 +326,17 @@ class Game_Env(object):
                 
                 if WALL in unique_counts_of_elems.keys():         
                     ## to increase the nb of walls
-                    quality += 1.5 * unique_counts_of_elems[WALL]/(self.map_size**2)
-                    
-        
-        
-        
+                    quality += 1.5 * unique_counts_of_elems[WALL]/(self.map_size**2)            
         """
+        
+        
         ## If key elements are here, then is there a path between them ?
         if START in unique_counts_of_elems.keys() and unique_counts_of_elems[START] == 1 and TREASURE in unique_counts_of_elems.keys() and unique_counts_of_elems[TREASURE] == 1:
             path_S_to_T = self.get_path(from_ = START, to_ = TREASURE, avoid = [WALL, FINISH])
             if path_S_to_T is None :
                 quality -= 1.0
             else : 
-                quality += 5*len(path_S_to_T) / (self.map_size * self.map_size)
+                quality += 5*len(path_S_to_T) / (self.map_size **2)
         else : 
             path_S_to_T = None
             
@@ -343,7 +345,7 @@ class Game_Env(object):
             if path_T_to_F is None :
                 quality -= 1.0
             else : 
-                quality += 5*len(path_T_to_F) / (self.map_size * self.map_size)
+                quality += 5*len(path_T_to_F) / (self.map_size **2)
         else : 
             path_T_to_F = None
             
@@ -354,12 +356,11 @@ class Game_Env(object):
             quality += 2.5
             
             quality += 5*len(np.unique(path_T_to_F + path_S_to_T, axis = 0))/len(path_T_to_F + path_S_to_T)                                       ## compute how much S->T is different from T->F
-            if EMPTY in unique_counts_of_elems.keys() and unique_counts_of_elems[EMPTY] != 0:
-                quality -= 5*(unique_counts_of_elems[EMPTY] - len(np.unique(path_T_to_F + path_S_to_T, axis = 0))+3)/unique_counts_of_elems[EMPTY]    ## Compute how much useless empty spaces there are
+            # if EMPTY in unique_counts_of_elems.keys() and unique_counts_of_elems[EMPTY] != 0:
+            #     quality -= 5*(unique_counts_of_elems[EMPTY] - len(np.unique(path_T_to_F + path_S_to_T, axis = 0))+3)/unique_counts_of_elems[EMPTY]    ## Compute how much useless empty spaces there are
             
-            if START in unique_counts_of_elems.keys() and unique_counts_of_elems[START] == 1 and FINISH in unique_counts_of_elems.keys() and unique_counts_of_elems[FINISH] == 1 :
-                path_S_to_F = self.get_path(from_ = START, to_ = FINISH, avoid = [WALL])        
-                quality += len(path_S_to_F) / (self.map_size * self.map_size)
+            path_S_to_F = self.get_path(from_ = START, to_ = FINISH, avoid = [WALL])        
+            quality += len(path_S_to_F) / (self.map_size **2)
             
         else : 
             quality -= 2.5
@@ -367,8 +368,8 @@ class Game_Env(object):
         
         # Improve diversity
         if WALL in unique_counts_of_elems.keys():            
-            quality += 3 * unique_counts_of_elems[WALL]/(self.map_size * self.map_size)
-        """
+            quality += 3 * unique_counts_of_elems[WALL]/(self.map_size **2)
+        
                 
         quality  = quality/5
         
