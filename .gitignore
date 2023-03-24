@@ -3,6 +3,8 @@ __pycache__/
 .spyproject/
 *.egg-info/
 
+gan.py
+
 reporting_saved/
 
 reporting/*
