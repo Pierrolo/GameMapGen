@@ -1,7 +1,7 @@
 # GameMapGen
 
 [agent_gif]: https://github.com/Pierrolo/GameMapGen/blob/main/content/example.gif "Trained Agent"
-[ExampleMap]: https://github.com/Pierrolo/GameMapGen/blob/main/content/example_map.png "ExampleMap"
+[ExampleMap]: https://github.com/Pierrolo/GameMapGen/blob/main/content/example_map_2.png "ExampleMap"
 
 ![Trained Agent][agent_gif]
 ![ExampleMap][ExampleMap]
