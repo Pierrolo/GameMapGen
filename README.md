@@ -3,10 +3,12 @@
 [agent_gif]: https://github.com/Pierrolo/GameMapGen/blob/main/content/example.gif "Trained Agent"
 [ExampleMap]: https://github.com/Pierrolo/GameMapGen/blob/main/content/example_map.png "ExampleMap"
 [ExampleMap_2]: https://github.com/Pierrolo/GameMapGen/blob/main/content/example_map_2.png "ExampleMap_2"
+[ExampleMap_3]: https://github.com/Pierrolo/GameMapGen/blob/main/content/example_map_3.png "ExampleMap_3"
 
 ![Trained Agent][agent_gif]
 ![ExampleMap][ExampleMap]
 ![ExampleMap_2][ExampleMap_2]
+![ExampleMap_3][ExampleMap_3]
 
 ## Description 
 
