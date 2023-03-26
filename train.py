@@ -113,8 +113,8 @@ if __name__ == "__main__" :
     
     config = tf.ConfigProto()
     config.gpu_options.per_process_gpu_memory_fraction = 0.8 # fraction of memory
-    config.gpu_options.allow_growth = True
-    config.gpu_options.visible_device_list = "0"
+    # config.gpu_options.allow_growth = True
+    # config.gpu_options.visible_device_list = "0"
     
     set_session(tf.Session(config=config))
     

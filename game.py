@@ -212,15 +212,24 @@ class Game_Env(object):
     def reset(self, wall_ratio = 0.33, key_elem_ratio = 0.5, max_nb_steps_ratio = None, test = False):
         if max_nb_steps_ratio is not None : 
             self.set_max_nb_steps_ratio(max_nb_steps_ratio)
-            
-        doable = False
-        while not doable : 
+        
+        
+        
+        if test :
+            self.current_map.generate_random_map_test(wall_ratio = wall_ratio, key_elem_ratio = key_elem_ratio)
+        else :
+            self.current_map.generate_random_map_train(wall_ratio = wall_ratio, key_elem_ratio = key_elem_ratio)
+        doable, _, _ = self.is_level_doable()
+        while doable :
             if test :
                 self.current_map.generate_random_map_test(wall_ratio = wall_ratio, key_elem_ratio = key_elem_ratio)
             else :
                 self.current_map.generate_random_map_train(wall_ratio = wall_ratio, key_elem_ratio = key_elem_ratio)
             doable, _, _ = self.is_level_doable()
-            
+        
+        
+        
+        
         self.nb_steps = 0
         self.current_quality = self.get_quality()
         
@@ -232,7 +241,7 @@ class Game_Env(object):
         ## action is in range(action_size), it encodes which tiles to be changed, and into what
         self.apply_action(action)
         
-        reward = self.get_reward()
+        reward = self.get_reward(action)
         next_state = self.get_state()
         done = self.get_done()
         
@@ -257,10 +266,11 @@ class Game_Env(object):
     
     
     
-    def get_reward(self):
+    def get_reward(self, action):
         reward  = 0.
-        # reward = self.get_quality() - self.current_quality
+        reward = self.get_quality() - self.current_quality
         # reward -= 0.1
+        
         if self.get_done():
             reward += self.get_quality()
         return reward
@@ -336,7 +346,7 @@ class Game_Env(object):
             if path_S_to_T is None :
                 quality -= 1.0
             else : 
-                quality += 5*len(path_S_to_T) / (self.map_size **2)
+                quality += 10*len(path_S_to_T) / (self.map_size **2)
         else : 
             path_S_to_T = None
             
@@ -345,7 +355,7 @@ class Game_Env(object):
             if path_T_to_F is None :
                 quality -= 1.0
             else : 
-                quality += 5*len(path_T_to_F) / (self.map_size **2)
+                quality += 10*len(path_T_to_F) / (self.map_size **2)
         else : 
             path_T_to_F = None
             
@@ -355,12 +365,12 @@ class Game_Env(object):
         if path_S_to_T is not None and path_T_to_F is not None : 
             quality += 2.5
             
-            quality += 5*len(np.unique(path_T_to_F + path_S_to_T, axis = 0))/len(path_T_to_F + path_S_to_T)                                       ## compute how much S->T is different from T->F
+            quality += 6*len(np.unique(path_T_to_F + path_S_to_T, axis = 0))/len(path_T_to_F + path_S_to_T)                                       ## compute how much S->T is different from T->F
             # if EMPTY in unique_counts_of_elems.keys() and unique_counts_of_elems[EMPTY] != 0:
             #     quality -= 5*(unique_counts_of_elems[EMPTY] - len(np.unique(path_T_to_F + path_S_to_T, axis = 0))+3)/unique_counts_of_elems[EMPTY]    ## Compute how much useless empty spaces there are
             
             path_S_to_F = self.get_path(from_ = START, to_ = FINISH, avoid = [WALL])        
-            quality += len(path_S_to_F) / (self.map_size **2)
+            quality += 5*len(path_S_to_F) / (self.map_size **2)
             
         else : 
             quality -= 2.5
@@ -368,7 +378,7 @@ class Game_Env(object):
         
         # Improve diversity
         if WALL in unique_counts_of_elems.keys():            
-            quality += 3 * unique_counts_of_elems[WALL]/(self.map_size **2)
+            quality += 2.5 * unique_counts_of_elems[WALL]/(self.map_size **2)
         
                 
         quality  = quality/5

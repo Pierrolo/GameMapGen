@@ -37,21 +37,21 @@ def U_Net(convs_input):
     conv_downs = []
     current_conv = convs_input
     for i in range(int(np.log(int(convs_input.shape[1]))/np.log(2)-1)):
-        current_conv = tf.keras.layers.Convolution2D(filters = CONV_SIZE, kernel_size = [2,2], strides = (1,1), activation = "relu", padding = "same")(current_conv)
+        # current_conv = tf.keras.layers.Convolution2D(filters = CONV_SIZE, kernel_size = [2,2], strides = (1,1), activation = "relu", padding = "same")(current_conv)
         current_conv = tf.keras.layers.Convolution2D(filters = CONV_SIZE, kernel_size = [2,2], strides = (1,1), activation = "relu", padding = "same")(current_conv)
         current_conv = tf.keras.layers.Convolution2D(filters = CONV_SIZE, kernel_size = [2,2], strides = (2,2), activation = "relu", padding = "same")(current_conv)
         conv_downs.append(current_conv)
     
     dense = tf.keras.layers.Flatten()(current_conv)
     curr_shape = int(dense.shape[1])
-    for i in range(3): 
-        dense = tf.keras.layers.Dense(CONV_SIZE, activation = "sigmoid")(dense)
-    dense = tf.keras.layers.Dense(curr_shape, activation = "sigmoid")(dense)
+    for i in range(1): 
+        dense = tf.keras.layers.Dense(CONV_SIZE, activation = "tanh")(dense)
+    dense = tf.keras.layers.Dense(curr_shape, activation = "tanh")(dense)
     
     conv_up = tf.keras.layers.Reshape((int(current_conv.shape[1]), int(current_conv.shape[2]), CONV_SIZE))(dense)
     for i in range(int(np.log(int(convs_input.shape[1]))/np.log(2)-1)):
         conv_up = tf.keras.layers.Concatenate()([conv_up, conv_downs[-(i+1)]])
-        conv_up = tf.keras.layers.Convolution2D(filters = CONV_SIZE, kernel_size = [2,2], strides = (1,1), activation = "relu", padding = "same")(conv_up)
+        # conv_up = tf.keras.layers.Convolution2D(filters = CONV_SIZE, kernel_size = [2,2], strides = (1,1), activation = "relu", padding = "same")(conv_up)
         conv_up = tf.keras.layers.Convolution2D(filters = CONV_SIZE, kernel_size = [2,2], strides = (1,1), activation = "relu", padding = "same")(conv_up)
         conv_up = tf.keras.layers.Conv2DTranspose(filters = CONV_SIZE, kernel_size = [2,2], strides = (2,2), activation = "relu", padding = "same")(conv_up)
     
@@ -109,7 +109,8 @@ def FractalNet(convs_input ):
 
 
 def build_head_cross_prod(conv_in, nb_of_elements = 5):
-    tile_pred =  tf.keras.layers.Dense(CONV_SIZE, activation = "softmax")(tf.keras.layers.Flatten()(conv_in))
+    tile_pred = tf.keras.layers.Convolution2D(filters = CONV_SIZE, kernel_size = [2,2], strides = (2,2), activation = "relu", padding = "same")(conv_in)
+    tile_pred =  tf.keras.layers.Dense(CONV_SIZE, activation = "softmax")(tf.keras.layers.Flatten()(tile_pred))
     tile_pred =  tf.keras.layers.Dense(nb_of_elements, activation = None)(tile_pred)
     
     pos_pred = tf.keras.layers.Convolution2D(filters = CONV_SIZE, kernel_size = [2,2], strides = (1,1), activation = "softmax", padding = "same")(conv_in)

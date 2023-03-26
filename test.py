@@ -73,8 +73,8 @@ def test_model(EPISODES, env, agent, wall_ratios = [0.65], key_elem_ratios = [0.
                         
                     df_reporting = df_reporting.append(dict_to_add, ignore_index=True)    
                 
-                print("Wall: {:.2}, KeyElem: {:.2}, MaxSteps: {:.2} Avg Doability: {:.2}"
-                      .format(wall_ratio, key_elem_ratio, max_nb_steps_ratio, np.mean(df_reporting["is_doable"].values[-EPISODES:])))
+                print("Wall: {:.2}, KeyElem: {:.2}, MaxSteps: {:.2} Avg Doability: {:.2} Avg Rwrd: {:.2}"
+                      .format(wall_ratio, key_elem_ratio, max_nb_steps_ratio, np.mean(df_reporting["is_doable"].values[-EPISODES:]), np.mean(df_reporting["reward"].values[-EPISODES:])))
         
 
     
@@ -97,7 +97,7 @@ if __name__ == "__main__" :
     
     parser = argparse.ArgumentParser(description='Test DQN Model')
     parser.add_argument('--model-name', '-m', type=str, 
-                        default='Map8_OldRwrd__Mar_24_15_15_32',
+                        default='Map12_MoreRwrdOnDists_DoubleBuffer_BiggerEpsDecay_OldRwrdDense__Mar_26_17_24_23',
                         help='Name of model to test')
     parser.add_argument('--checkpoint-nb', '-cn', type=int,  default=None, help='which checkpoint to load')
     parser.add_argument('--EPISODES', '-E', type=int,  default=50, help='Nb of episodes to run')
@@ -108,6 +108,7 @@ if __name__ == "__main__" :
     model_name_saved = args.model_name
     
     ## Map8_Unet_NewRwrd__Mar_22_19_57_27
+    ## Map12_DoubleBuffer_BiggerEpsDecay_OldRwrdDense__Mar_26_01_06_25 best on map 12
     ## Map8_CurriculumMoreElemSpawn_SeparatePosAndElemSoftmaxAction_RwrdDistStoF__Mar_20_01_49_34 best so far
     
         
